@@ -1,9 +1,9 @@
-datasource db {
+datasource db3 {
     provider = "sqlite"
     url      = "file:../dev.db"
 }
 
-generator client {
+generator client3 {
     provider = "prisma-client-js"
 }
 
