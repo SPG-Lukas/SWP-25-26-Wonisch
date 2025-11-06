@@ -3,7 +3,8 @@
         "pg": "deno run -A prisma generate",
         "pv": "deno run -A prisma validate",
         "pmd": "deno run -A prisma migrate dev",
-        "seed": "deno run -A --env-file seed.ts"
+        "seed": "deno run -A --env-file seed.ts",
+        "ps": "deno run -A prisma studio"
     },
     "imports": {
         "@faker-js/faker": "npm:@faker-js/faker@^10.1.0",
