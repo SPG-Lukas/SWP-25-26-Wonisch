@@ -23,6 +23,9 @@ while (passengers_created < passengers_to_create) {
             email: faker.internet.email(),
         });
         passengers_created++;
+        if (passengers_created % 1000 === 0) {
+            console.log(`  passengers created: ${passengers_created}/${passengers_to_create}`);
+        }
     } catch (e) {
         console.error(`Error creating passenger:`, (e as Error).message);
     }
@@ -39,6 +42,9 @@ while (planes_created < planes_to_create) {
             capacity: faker.number.int({ min: 10, max: 850 }),
         });
         planes_created++;
+        if (planes_created % 50 === 0) {
+            console.log(`  planes created: ${planes_created}/${planes_to_create}`);
+        }
     } catch (e) {
         console.error(`Error creating plane:`, (e as Error).message);
     }
@@ -57,6 +63,9 @@ while (airports_created < airports_to_create) {
             city: faker.location.city(),
         });
         airports_created++;
+        if (airports_created % 20 === 0) {
+            console.log(`  airports created: ${airports_created}/${airports_to_create}`);
+        }
     } catch (e) {
         console.error(`Error creating airport:`, (e as Error).message);
     }
@@ -101,6 +110,9 @@ while (flights_created < flights_to_create) {
             planeId: plane.id,
         });
         flights_created++;
+        if (flights_created % 500 === 0) {
+            console.log(`  flights created: ${flights_created}/${flights_to_create}`);
+        }
     } catch (e) {
         console.error(`Error creating flight:`, (e as Error).message);
     }
@@ -108,3 +120,33 @@ while (flights_created < flights_to_create) {
 
 console.log("✅ Seed complete!");
 await disconnect();
+
+// --- Assign passengers to flights ---
+// We'll assign each passenger to one random flight to create the join rows.
+import { prisma } from "./repository/db.ts";
+
+console.log("Starting assignment of passengers to flights...");
+const allFlights = await prisma.flight.findMany({ select: { id: true } });
+const allPassengers = await prisma.passenger.findMany({ select: { id: true } });
+if (allFlights.length === 0) {
+    console.log("No flights to assign to — skipping assignment.");
+} else {
+    const batchSize = 500;
+    let assigned = 0;
+    for (let i = 0; i < allPassengers.length; i += batchSize) {
+        const batch = allPassengers.slice(i, i + batchSize);
+        const tx = batch.map(p => {
+            const flightId = allFlights[Math.floor(Math.random() * allFlights.length)].id;
+            return prisma.passenger.update({ where: { id: p.id }, data: { flights: { connect: { id: flightId } } } });
+        });
+        await prisma.$transaction(tx);
+        assigned += batch.length;
+        if (assigned % 2000 === 0) {
+            console.log(`  assigned ${assigned}/${allPassengers.length} passengers`);
+        }
+    }
+    console.log('Assignment complete.');
+    const countRes: any = await prisma.$queryRaw`SELECT count(*) as c FROM _FlightToPassenger`;
+    console.log('Total links in _FlightToPassenger:', countRes[0]?.c ?? countRes?.c ?? countRes);
+}
+await prisma.$disconnect();

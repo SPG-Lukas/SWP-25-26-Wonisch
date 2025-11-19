@@ -1,4 +1,5 @@
 // Nur mit diesem Objekt in die Datenbank greifen!!
+// Nur mit diesem Objekt in die Datenbank greifen!!
 import { Prisma } from "../prisma/client/browser.ts";
 import { prisma } from "./db.ts";
 
