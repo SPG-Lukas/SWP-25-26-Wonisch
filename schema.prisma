@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/prismaclient"
+  runtime  = "deno"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Filiale {
+  id          Int         @id @default(autoincrement())
+  name        String
+  adresse     String?
+  abteilungen Abteilung[]
+  mitarbeiter Mitarbeiter[]
+  exemplare   Exemplar[]
+}
+
+model Abteilung {
+  id        Int     @id @default(autoincrement())
+  name      String
+  filialeId Int
+  filiale   Filiale @relation(fields: [filialeId], references: [id])
+  buecher   Buch[]
+}
+
+model Mitarbeiter {
+  id          Int          @id @default(autoincrement())
+  vorname     String
+  nachname    String
+  filialeId   Int
+  filiale     Filiale      @relation(fields: [filialeId], references: [id])
+  entlehnungen Entlehnung[]
+}
+
+model Buch {
+  id          Int        @id @default(autoincrement())
+  titel       String
+  autor       String?
+  isbn        String?    @unique
+  abteilungId Int
+  abteilung   Abteilung  @relation(fields: [abteilungId], references: [id])
+  exemplare   Exemplar[]
+}
+
+model Exemplar {
+  id          Int        @id @default(autoincrement())
+  barcode     String?    @unique
+  zustand     String?
+  filialeId   Int
+  filiale     Filiale    @relation(fields: [filialeId], references: [id])
+  buchId      Int
+  buch        Buch       @relation(fields: [buchId], references: [id])
+  entlehnungen Entlehnung[]
+}
+
+model Kunde {
+  id          Int          @id @default(autoincrement())
+  vorname     String
+  nachname    String
+  email       String?      @unique
+  entlehnungen Entlehnung[]
+}
+
+model Entlehnung {
+  id            Int         @id @default(autoincrement())
+  exemplarId    Int
+  exemplar      Exemplar    @relation(fields: [exemplarId], references: [id])
+  kundeId       Int
+  kunde         Kunde       @relation(fields: [kundeId], references: [id])
+  mitarbeiterId Int
+  mitarbeiter   Mitarbeiter @relation(fields: [mitarbeiterId], references: [id])
+  entliehenAm   DateTime    @default(now())
+  retourDatum   DateTime?
+  returned      Boolean     @default(false)
+}
